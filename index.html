@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz : Les Feux Follets & La Phénylcétonurie</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        :root {
+            --primary-orange: #f39200;
+            --secondary-yellow: #ffc107;
+            --dark-blue: #003a5d;
+            --light-bg: #fdfaf6;
+            --correct-green: #28a745;
+            --wrong-red: #dc3545;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light-bg);
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .quiz-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+            padding: 30px;
+            text-align: center;
+            border-top: 8px solid var(--primary-orange);
+            position: relative;
+        }
+
+        h1 {
+            color: var(--dark-blue);
+            font-size: 1.8em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        /* Accueil et QR */
+        .welcome-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .qr-box {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 2px dashed var(--primary-orange);
+        }
+        .qr-box img {
+            max-width: 150px;
+            height: auto;
+        }
+        .qr-instruction {
+            font-size: 0.9em;
+            color: var(--dark-blue);
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        /* Quiz */
+        .question {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin: 30px 0 20px 0;
+            color: var(--dark-blue);
+            min-height: 60px;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-btn {
+            background-color: white;
+            border: 2px solid var(--primary-orange);
+            color: var(--dark-blue);
+            padding: 15px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: all 0.2s ease-in-out;
+            position: relative;
+        }
+
+        .option-btn:not(:disabled):hover {
+            background-color: var(--secondary-yellow);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        /* Couleurs et Animations de réponse */
+        .option-btn.correct {
+            background-color: var(--correct-green) !important;
+            color: white !important;
+            border-color: var(--correct-green) !important;
+        }
+        
+        .option-btn.animate-correct {
+            animation: pulse-green 0.6s ease-out;
+        }
+
+        @keyframes pulse-green {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); box-shadow: 0 0 15px var(--correct-green); }
+            100% { transform: scale(1); }
+        }
+
+        .option-btn.incorrect {
+            background-color: var(--wrong-red) !important;
+            color: white !important;
+            border-color: var(--wrong-red) !important;
+        }
+
+        .option-btn.animate-incorrect {
+            animation: shake-red 0.5s ease-in-out;
+        }
+
+        @keyframes shake-red {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
+        }
+
+        .option-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.8;
+        }
+
+        .action-btn {
+            background-color: var(--dark-blue);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            margin-top: 25px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: bold;
+            transition: 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .action-btn:hover {
+            background-color: #00223e;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+
+        .hidden { display: none !important; }
+
+        .trophy { font-size: 100px; margin: 20px 0; }
+
+        input[type="text"] {
+            padding: 12px;
+            font-size: 1.1em;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            width: 80%;
+            margin-top: 15px;
+            transition: 0.3s;
+        }
+        input[type="text"]:focus {
+            border-color: var(--primary-orange);
+            outline: none;
+        }
+        
+        .progress {
+            font-size: 0.9em;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    
+    <div id="welcome-block" class="welcome-content">
+        <h1>🔥 Les Feux Follets</h1>
+        <p class="subtitle">Animation Hôpital : Le grand quiz sur la PCU</p>
+
+        <div class="qr-box">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://votre-lien-github-ici.com" alt="QR Code du Quiz">
+            <p class="qr-instruction">Scannez pour jouer sur votre mobile !</p>
+        </div>
+
+        <p>Testez vos connaissances et tentez de remporter le trophée d'or !</p>
+        <button class="action-btn" onclick="startQuiz()">Commencer le Quiz</button>
+    </div>
+
+    <div id="quiz-block" class="hidden">
+        <div class="progress" id="progress-text">Question 1 / 10</div>
+        <div class="question" id="question-text">Chargement...</div>
+        <div class="options" id="options-container"></div>
+        <button id="next-btn" class="action-btn" style="display:none;" onclick="nextQuestion()">Question suivante ➔</button>
+    </div>
+
+    <div id="result-block" class="hidden">
+        <h2>Quiz Terminé !</h2>
+        <div class="trophy" id="trophy-emoji">🏆</div>
+        <h1 id="score-final">Score: 0/10</h1>
+        <p id="feedback-text" style="font-size: 1.2em; margin: 20px 0;"></p>
+        
+        <div id="firebase-save-block" style="background: #f9f9f9; padding: 20px; border-radius: 10px; margin-top: 20px;">
+            <p style="margin-top:0; font-weight: bold; color: var(--dark-blue);">Inscrire mon score au tableau d'honneur :</p>
+            <input type="text" id="player-name" placeholder="Votre prénom ou pseudo">
+            <br>
+            <button id="save-btn" class="action-btn" onclick="saveScoreToFirebase()">Sauvegarder</button>
+        </div>
+        <button class="action-btn" style="background-color: #666; margin-top: 30px;" onclick="location.reload()">🔄 Rejouer</button>
+    </div>
+</div>
+
+<script>
+    // --- CONFIGURATION FIREBASE ---
+    const firebaseConfig = {
+	  apiKey: "AIzaSyCoTQOSNy-9EcpEncFprbEjCqa7lCGkRHs",
+	  authDomain: "quiz-feux-follets.firebaseapp.com",
+	  projectId: "quiz-feux-follets",
+	  storageBucket: "quiz-feux-follets.firebasestorage.app",
+	  messagingSenderId: "294811125482",
+	  appId: "1:294811125482:web:9a1565ed6b9e76d286f993"
+    };
+
+     firebase.initializeApp(firebaseConfig);
+     const db = firebase.firestore();
+
+    // --- DONNÉES DU QUIZ ---
+    const questions = [
+        { q: "Quelle est la mission principale de l'association « Les Feux Follets » ?", options: ["Financer la recherche sur le cancer.", "Soutenir les parents et adultes atteints de PCU et d'autres maladies métaboliques.", "Organiser des collectes de sang.", "Promouvoir le sport pour tous."], answer: 1 },
+        { q: "En quelle année le dépistage systématique de la PCU a-t-il été introduit en France ?", options: ["1965", "1972", "1980", "1995"], answer: 1 },
+        { q: "Quelle est l'origine biologique de la phénylcétonurie ?", options: ["Une carence en vitamines durant la grossesse.", "Une infection bactérienne néonatale.", "Une anomalie génétique du métabolisme de la phénylalanine.", "Une allergie alimentaire sévère au gluten."], answer: 2 },
+        { q: "Quel est le pilier central du traitement de la PCU ?", options: ["Une activité physique intensive quotidienne.", "Un régime alimentaire pauvre en protéines (phénylalanine).", "Un traitement antibiotique à vie.", "Une greffe de foie systématique."], answer: 1 },
+        { q: "Quels aliments sont généralement exclus ou strictement limités dans le régime PCU ?", options: ["Les fruits et les légumes.", "Les huiles et les sucres.", "La viande, le poisson et les œufs.", "L'eau minérale et les infusions."], answer: 2 },
+        { q: "Quel additif alimentaire est strictement interdit car il contient de la phénylalanine ?", options: ["Le sel de table.", "L'aspartame.", "La lécithine de soja.", "Le bicarbonate de soude."], answer: 1 },
+        { q: "Quel est l'objectif de taux sanguin de phénylalanine pour un enfant de moins de 12 ans ?", options: ["Entre 120 et 360 µmol/L.", "Entre 600 et 900 µmol/L.", "Moins de 50 µmol/L.", "Plus de 1000 µmol/L."], answer: 0 },
+        { q: "Qu'est-ce que le Kuvan® (saproptérine) ?", options: ["Un substitut de lait sans protéines.", "Une application mobile pour calculer les repas.", "Un médicament augmentant la tolérance à la phénylalanine chez certains patients.", "Un test de dépistage urinaire."], answer: 2 },
+        { q: "Quel est le risque pour le fœtus d'une femme enceinte atteinte de PCU si ses taux ne sont pas strictement contrôlés ?", options: ["Une coloration anormale des cheveux.", "L'embryofœtopathie phénylcétonurique (malformations cardiaques, microcéphalie).", "Une allergie immédiate aux fruits.", "Aucun risque n'a été identifié."], answer: 1 },
+        { q: "Comment s'effectue généralement le contrôle régulier des taux de phénylalanine à domicile ?", options: ["Par un test salivaire.", "Par une pesée quotidienne.", "Par un prélèvement de sang sur un carton buvard (test de Guthrie).", "Par une analyse d'haleine."], answer: 2 }
+    ];
+
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let hasAnswered = false;
+
+    // Fonction de déclenchement du feu d'artifice
+    function fireConfetti() {
+        // Couleurs de l'asso : Orange, Jaune, Bleu
+        var myColors = ['#f39200', '#ffc107', '#003a5d'];
+        confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: myColors
+        });
+    }
+
+    function startQuiz() {
+        document.getElementById('welcome-block').classList.add('hidden');
+        document.getElementById('quiz-block').classList.remove('hidden');
+        loadQuestion();
+    }
+
+    function loadQuestion() {
+        hasAnswered = false;
+        document.getElementById('next-btn').style.display = "none";
+        
+        const q = questions[currentQuestionIndex];
+        document.getElementById('progress-text').innerText = `QUESTION ${currentQuestionIndex + 1} SUR ${questions.length}`;
+        document.getElementById('question-text').innerText = q.q;
+        
+        const optionsContainer = document.getElementById('options-container');
+        optionsContainer.innerHTML = "";
+
+        q.options.forEach((opt, index) => {
+            const btn = document.createElement('button');
+            btn.className = "option-btn";
+            btn.innerHTML = `<span>${opt}</span>`;
+            btn.onclick = () => selectOption(btn, index);
+            optionsContainer.appendChild(btn);
+        });
+    }
+
+    function selectOption(clickedBtn, selectedIndex) {
+        if (hasAnswered) return;
+        hasAnswered = true;
+
+        const q = questions[currentQuestionIndex];
+        const buttons = document.querySelectorAll('.option-btn');
+        
+        if (selectedIndex === q.answer) {
+            clickedBtn.classList.add('correct', 'animate-correct');
+            score++;
+            fireConfetti(); // <-- DÉCLENCHEMENT DU FEU D'ARTIFICE
+        } else {
+            clickedBtn.classList.add('incorrect', 'animate-incorrect');
+            buttons[q.answer].classList.add('correct'); 
+        }
+
+        buttons.forEach(btn => btn.disabled = true);
+        document.getElementById('next-btn').style.display = "inline-block";
+    }
+
+    function nextQuestion() {
+        currentQuestionIndex++;
+        if (currentQuestionIndex < questions.length) {
+            loadQuestion();
+        } else {
+            showResults();
+        }
+    }
+
+    function showResults() {
+        document.getElementById('quiz-block').classList.add('hidden');
+        document.getElementById('result-block').classList.remove('hidden');
+        
+        document.getElementById('score-final').innerText = `Score : ${score} / ${questions.length}`;
+        
+        const feedback = document.getElementById('feedback-text');
+        const trophy = document.getElementById('trophy-emoji');
+        
+        if (score === 10) {
+            feedback.innerText = "Incroyable ! Vous êtes un expert absolu des Feux Follets !";
+            trophy.innerText = "👑🏆👑";
+            fireConfetti(); // Feu d'artifice final pour le score parfait !
+        } else if (score >= 8) {
+            feedback.innerText = "Excellent travail ! Vous maîtrisez très bien le sujet.";
+            trophy.innerText = "🥇 Or";
+        } else if (score >= 5) {
+            feedback.innerText = "Bien joué ! Vous avez de bonnes connaissances.";
+            trophy.innerText = "🥈 Argent";
+        } else {
+            feedback.innerText = "Merci pour votre participation ! L'important est d'apprendre.";
+            trophy.innerText = "🥉 Bronze";
+        }
+    }
+
+    function saveScoreToFirebase() {
+        const playerName = document.getElementById('player-name').value;
+        const saveBtn = document.getElementById('save-btn');
+
+        if (!playerName) {
+            alert("Merci d'entrer un nom !");
+            return;
+        }
+
+        saveBtn.disabled = true;
+        saveBtn.innerText = "Sauvegarde en cours...";
+
+        if(typeof db === 'undefined') {
+            setTimeout(() => {
+                alert(`⚠️ Mode Simulation : Bravo ${playerName}, score de ${score} mémorisé ! (Activez Firebase pour de vrai)`);
+                document.getElementById('firebase-save-block').innerHTML = "<p style='color:var(--correct-green); font-weight:bold; text-align:center;'>✅ Score enregistré (simulation) !</p>";
+            }, 1000);
+            return;
+        }
+
+        db.collection("hospital_scores").add({
+            name: playerName,
+            score: score,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        })
+        .then(() => {
+            document.getElementById('firebase-save-block').innerHTML = "<p style='color:var(--correct-green); font-weight:bold; text-align:center; font-size:1.2em;'>🎉 Score enregistré avec succès ! Merci !</p>";
+        })
+        .catch((error) => {
+            console.error("Erreur : ", error);
+            saveBtn.disabled = false;
+            saveBtn.innerText = "Réessayer la sauvegarde";
+            alert("Oups, une erreur est survenue. Vérifiez la connexion.");
+        });
+    }
+</script>
+
+</body>
+</html>
