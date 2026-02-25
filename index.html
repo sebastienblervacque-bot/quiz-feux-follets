@@ -7,7 +7,6 @@
     
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
-
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <style>
@@ -18,6 +17,10 @@
             --light-bg: #fdfaf6;
             --correct-green: #28a745;
             --wrong-red: #dc3545;
+        }
+
+        * {
+            box-sizing: border-box;
         }
 
         body {
@@ -47,12 +50,19 @@
         h1 {
             color: var(--dark-blue);
             font-size: 1.8em;
-            margin-bottom: 10px;
+            margin: 0 0 10px 0;
+        }
+
+        h2 {
+            color: var(--dark-blue);
+            font-size: 1.5em;
+            margin: 0 0 15px 0;
         }
 
         .subtitle {
             color: #666;
             margin-bottom: 30px;
+            font-size: 0.95em;
         }
 
         /* Accueil et QR */
@@ -61,6 +71,7 @@
             flex-direction: column;
             align-items: center;
         }
+
         .qr-box {
             background: #f0f0f0;
             padding: 15px;
@@ -68,10 +79,13 @@
             margin: 20px 0;
             border: 2px dashed var(--primary-orange);
         }
+
         .qr-box img {
             max-width: 150px;
             height: auto;
+            display: block;
         }
+
         .qr-instruction {
             font-size: 0.9em;
             color: var(--dark-blue);
@@ -86,12 +100,14 @@
             margin: 30px 0 20px 0;
             color: var(--dark-blue);
             min-height: 60px;
+            line-height: 1.4;
         }
 
         .options {
             display: flex;
             flex-direction: column;
             gap: 12px;
+            margin: 25px 0;
         }
 
         .option-btn {
@@ -101,15 +117,16 @@
             padding: 15px;
             border-radius: 12px;
             cursor: pointer;
-            font-size: 1.1em;
+            font-size: 1em;
             transition: all 0.2s ease-in-out;
             position: relative;
+            text-align: left;
         }
 
         .option-btn:not(:disabled):hover {
             background-color: var(--secondary-yellow);
             transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
 
         /* Couleurs et Animations de réponse */
@@ -156,36 +173,50 @@
             border: none;
             padding: 15px 30px;
             border-radius: 50px;
-            margin-top: 25px;
+            margin-top: 20px;
             cursor: pointer;
-            font-size: 1.1em;
+            font-size: 1em;
             font-weight: bold;
             transition: 0.3s;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
-        .action-btn:hover {
+        .action-btn:hover:not(:disabled) {
             background-color: #00223e;
             transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
         }
 
-        .hidden { display: none !important; }
+        .action-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
 
-        .trophy { font-size: 100px; margin: 20px 0; }
+        .hidden { 
+            display: none !important; 
+        }
+
+        .trophy { 
+            font-size: 100px; 
+            margin: 20px 0; 
+            display: block;
+        }
 
         input[type="text"] {
             padding: 12px;
-            font-size: 1.1em;
+            font-size: 1em;
             border: 2px solid #ddd;
             border-radius: 8px;
-            width: 80%;
-            margin-top: 15px;
+            width: 85%;
+            margin: 15px auto;
+            display: block;
             transition: 0.3s;
         }
+
         input[type="text"]:focus {
             border-color: var(--primary-orange);
             outline: none;
+            box-shadow: 0 0 5px rgba(243, 146, 0, 0.3);
         }
         
         .progress {
@@ -193,85 +224,277 @@
             color: #888;
             text-transform: uppercase;
             letter-spacing: 1px;
+            margin-bottom: 20px;
+        }
+
+        .firebase-status {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .status-success {
+            background-color: #efe;
+            color: #060;
+            border-left: 4px solid #060;
+        }
+
+        .status-error {
+            background-color: #fee;
+            color: #c00;
+            border-left: 4px solid #c00;
+        }
+
+        .firebase-save-block {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 25px;
+            border: 2px solid #eee;
+        }
+
+        .firebase-save-block p {
+            margin-top: 0;
+            font-weight: bold;
+            color: var(--dark-blue);
+        }
+
+        #next-btn {
+            margin-top: 25px;
+        }
+
+        .btn-secondary {
+            background-color: #666;
+        }
+
+        .btn-secondary:hover {
+            background-color: #555;
+        }
+
+        @media (max-width: 600px) {
+            .quiz-container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            .question {
+                font-size: 1.1em;
+            }
+
+            .option-btn {
+                padding: 12px;
+                font-size: 0.95em;
+            }
+
+            input[type="text"] {
+                width: 90%;
+            }
         }
     </style>
 </head>
 <body>
 
 <div class="quiz-container">
-    
-    <div id="welcome-block" class="welcome-content">
-        <h1>🔥 Les Feux Follets</h1>
-        <p class="subtitle">Animation Hôpital : Le grand quiz sur la PCU</p>
+    <div id="firebase-status-container"></div>
 
-        <div class="qr-box">
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://sebastienblervacque-bot.github.io/quiz-feux-follets/" alt="QR Code du Quiz">
-            <p class="qr-instruction">Scannez pour jouer sur votre mobile !</p>
+    <!-- ÉCRAN D'ACCUEIL -->
+    <div id="welcome-block">
+        <h1>🏆 Quiz Les Feux Follets</h1>
+        <p class="subtitle">Testez vos connaissances sur la phénylcétonurie et l'association</p>
+        
+        <div class="welcome-content">
+            <div class="qr-box">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://sebastienblervacque-bot.github.io/quiz-feux-follets/" alt="QR Code du Quiz">
+                <p class="qr-instruction">📱 Scannez pour jouer sur votre mobile !</p>
+            </div>
+
+            <p>Testez vos connaissances et tentez de remporter le trophée d'or !</p>
+            <button class="action-btn" onclick="startQuiz()">🚀 Commencer le Quiz</button>
         </div>
-
-        <p>Testez vos connaissances et tentez de remporter le trophée d'or !</p>
-        <button class="action-btn" onclick="startQuiz()">Commencer le Quiz</button>
     </div>
 
+    <!-- BLOC QUIZ -->
     <div id="quiz-block" class="hidden">
         <div class="progress" id="progress-text">Question 1 / 10</div>
         <div class="question" id="question-text">Chargement...</div>
         <div class="options" id="options-container"></div>
-        <button id="next-btn" class="action-btn" style="display:none;" onclick="nextQuestion()">Question suivante ➔</button>
+        <button id="next-btn" class="action-btn" style="display: none;" onclick="nextQuestion()">Question suivante ➔</button>
     </div>
 
+    <!-- BLOC RÉSULTATS -->
     <div id="result-block" class="hidden">
-        <h2>Quiz Terminé !</h2>
+        <h2>🎊 Quiz Terminé !</h2>
         <div class="trophy" id="trophy-emoji">🏆</div>
         <h1 id="score-final">Score: 0/10</h1>
-        <p id="feedback-text" style="font-size: 1.2em; margin: 20px 0;"></p>
+        <p id="feedback-text" style="font-size: 1.1em; margin: 20px 0;"></p>
         
-        <div id="firebase-save-block" style="background: #f9f9f9; padding: 20px; border-radius: 10px; margin-top: 20px;">
-            <p style="margin-top:0; font-weight: bold; color: var(--dark-blue);">Inscrire mon score au tableau d'honneur :</p>
-            <input type="text" id="player-name" placeholder="Votre prénom ou pseudo">
-            <br>
-            <button id="save-btn" class="action-btn" onclick="saveScoreToFirebase()">Sauvegarder</button>
+        <div class="firebase-save-block">
+            <p>📊 Inscrire mon score au tableau d'honneur :</p>
+            <input type="text" id="player-name" placeholder="Votre prénom ou pseudo" maxlength="50">
+            <button id="save-btn" class="action-btn" onclick="saveScoreToFirebase()">💾 Sauvegarder le score</button>
+            <div id="save-status" style="margin-top: 10px;"></div>
         </div>
-        <button class="action-btn" style="background-color: #666; margin-top: 30px;" onclick="location.reload()">🔄 Rejouer</button>
+        <button class="action-btn btn-secondary" style="margin-top: 20px;" onclick="location.reload()">🔄 Rejouer</button>
     </div>
 </div>
 
 <script>
-    // --- CONFIGURATION FIREBASE ---
+    // ========================================
+    // --- 1. CONFIGURATION FIREBASE ---
+    // ========================================
     const firebaseConfig = {
-	  apiKey: "AIzaSyCoTQOSNy-9EcpEncFprbEjCqa7lCGkRHs",
-	  authDomain: "quiz-feux-follets.firebaseapp.com",
-	  projectId: "quiz-feux-follets",
-	  storageBucket: "quiz-feux-follets.firebasestorage.app",
-	  messagingSenderId: "294811125482",
-	  appId: "1:294811125482:web:9a1565ed6b9e76d286f993"
+        apiKey: "AIzaSyCoTQOSNy-9EcpEncFprbEjCqa7lCGkRHs",
+        authDomain: "quiz-feux-follets.firebaseapp.com",
+        projectId: "quiz-feux-follets",
+        storageBucket: "quiz-feux-follets.firebasestorage.app",
+        messagingSenderId: "294811125482",
+        appId: "1:294811125482:web:9a1565ed6b9e76d286f993"
     };
 
-     firebase.initializeApp(firebaseConfig);
-     const db = firebase.firestore();
+    let db = null;
 
-    // --- DONNÉES DU QUIZ ---
+    // Initialisation Firebase avec gestion d'erreur
+    try {
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.firestore();
+        console.log("✓ Firebase initialisé avec succès");
+        updateFirebaseStatus("connecté", true);
+    } catch (error) {
+        console.error("✗ Erreur Firebase:", error);
+        updateFirebaseStatus(`Erreur: ${error.message}`, false);
+        db = null;
+    }
+
+    // ========================================
+    // --- 2. DONNÉES DU QUIZ ---
+    // ========================================
     const questions = [
-        { q: "Quelle est la mission principale de l'association « Les Feux Follets » ?", options: ["Financer la recherche sur le cancer.", "Soutenir les parents et adultes atteints de PCU et d'autres maladies métaboliques.", "Organiser des collectes de sang.", "Promouvoir le sport pour tous."], answer: 1 },
-        { q: "En quelle année le dépistage systématique de la PCU a-t-il été introduit en France ?", options: ["1965", "1972", "1980", "1995"], answer: 1 },
-        { q: "Quelle est l'origine biologique de la phénylcétonurie ?", options: ["Une carence en vitamines durant la grossesse.", "Une infection bactérienne néonatale.", "Une anomalie génétique du métabolisme de la phénylalanine.", "Une allergie alimentaire sévère au gluten."], answer: 2 },
-        { q: "Quel est le pilier central du traitement de la PCU ?", options: ["Une activité physique intensive quotidienne.", "Un régime alimentaire pauvre en protéines (phénylalanine).", "Un traitement antibiotique à vie.", "Une greffe de foie systématique."], answer: 1 },
-        { q: "Quels aliments sont généralement exclus ou strictement limités dans le régime PCU ?", options: ["Les fruits et les légumes.", "Les huiles et les sucres.", "La viande, le poisson et les œufs.", "L'eau minérale et les infusions."], answer: 2 },
-        { q: "Quel additif alimentaire est strictement interdit car il contient de la phénylalanine ?", options: ["Le sel de table.", "L'aspartame.", "La lécithine de soja.", "Le bicarbonate de soude."], answer: 1 },
-        { q: "Quel est l'objectif de taux sanguin de phénylalanine pour un enfant de moins de 12 ans ?", options: ["Entre 120 et 360 µmol/L.", "Entre 600 et 900 µmol/L.", "Moins de 50 µmol/L.", "Plus de 1000 µmol/L."], answer: 0 },
-        { q: "Qu'est-ce que le Kuvan® (saproptérine) ?", options: ["Un substitut de lait sans protéines.", "Une application mobile pour calculer les repas.", "Un médicament augmentant la tolérance à la phénylalanine chez certains patients.", "Un test de dépistage urinaire."], answer: 2 },
-        { q: "Quel est le risque pour le fœtus d'une femme enceinte atteinte de PCU si ses taux ne sont pas strictement contrôlés ?", options: ["Une coloration anormale des cheveux.", "L'embryofœtopathie phénylcétonurique (malformations cardiaques, microcéphalie).", "Une allergie immédiate aux fruits.", "Aucun risque n'a été identifié."], answer: 1 },
-        { q: "Comment s'effectue généralement le contrôle régulier des taux de phénylalanine à domicile ?", options: ["Par un test salivaire.", "Par une pesée quotidienne.", "Par un prélèvement de sang sur un carton buvard (test de Guthrie).", "Par une analyse d'haleine."], answer: 2 }
+        { 
+            q: "Quelle est la mission principale de l'association « Les Feux Follets » ?", 
+            options: [
+                "Financer la recherche sur le cancer.",
+                "Soutenir les parents et adultes atteints de PCU et d'autres maladies métaboliques.",
+                "Organiser des collectes de sang.",
+                "Promouvoir le sport pour tous."
+            ], 
+            answer: 1 
+        },
+        { 
+            q: "En quelle année le dépistage systématique de la PCU a-t-il été introduit en France ?", 
+            options: ["1965", "1972", "1980", "1995"], 
+            answer: 1 
+        },
+        { 
+            q: "Quelle est l'origine biologique de la phénylcétonurie ?", 
+            options: [
+                "Une carence en vitamines durant la grossesse.",
+                "Une infection bactérienne néonatale.",
+                "Une anomalie génétique du métabolisme de la phénylalanine.",
+                "Une allergie alimentaire sévère au gluten."
+            ], 
+            answer: 2 
+        },
+        { 
+            q: "Quel est le pilier central du traitement de la PCU ?", 
+            options: [
+                "Une activité physique intensive quotidienne.",
+                "Un régime alimentaire pauvre en protéines (phénylalanine).",
+                "Un traitement antibiotique à vie.",
+                "Une greffe de foie systématique."
+            ], 
+            answer: 1 
+        },
+        { 
+            q: "Quels aliments sont généralement exclus ou strictement limités dans le régime PCU ?", 
+            options: [
+                "Les fruits et les légumes.",
+                "Les huiles et les sucres.",
+                "La viande, le poisson et les œufs.",
+                "L'eau minérale et les infusions."
+            ], 
+            answer: 2 
+        },
+        { 
+            q: "Quel additif alimentaire est strictement interdit car il contient de la phénylalanine ?", 
+            options: [
+                "Le sel de table.",
+                "L'aspartame.",
+                "La lécithine de soja.",
+                "Le bicarbonate de soude."
+            ], 
+            answer: 1 
+        },
+        { 
+            q: "Quel est l'objectif de taux sanguin de phénylalanine pour un enfant de moins de 12 ans ?", 
+            options: [
+                "Entre 120 et 360 µmol/L.",
+                "Entre 600 et 900 µmol/L.",
+                "Moins de 50 µmol/L.",
+                "Plus de 1000 µmol/L."
+            ], 
+            answer: 0 
+        },
+        { 
+            q: "Qu'est-ce que le Kuvan® (saproptérine) ?", 
+            options: [
+                "Un substitut de lait sans protéines.",
+                "Une application mobile pour calculer les repas.",
+                "Un médicament augmentant la tolérance à la phénylalanine chez certains patients.",
+                "Un test de dépistage urinaire."
+            ], 
+            answer: 2 
+        },
+        { 
+            q: "Quel est le risque pour le fœtus d'une femme enceinte atteinte de PCU si ses taux ne sont pas strictement contrôlés ?", 
+            options: [
+                "Une coloration anormale des cheveux.",
+                "L'embryofœtopathie phénylcétonurique (malformations cardiaques, microcéphalie).",
+                "Une allergie immédiate aux fruits.",
+                "Aucun risque n'a été identifié."
+            ], 
+            answer: 1 
+        },
+        { 
+            q: "Comment s'effectue généralement le contrôle régulier des taux de phénylalanine à domicile ?", 
+            options: [
+                "Par un test salivaire.",
+                "Par une pesée quotidienne.",
+                "Par un prélèvement de sang sur un carton buvard (test de Guthrie).",
+                "Par une analyse d'haleine."
+            ], 
+            answer: 2 
+        }
     ];
 
+    // ========================================
+    // --- 3. VARIABLES DE SUIVI ---
+    // ========================================
     let currentQuestionIndex = 0;
     let score = 0;
     let hasAnswered = false;
 
-    // Fonction de déclenchement du feu d'artifice
+    // ========================================
+    // --- 4. GESTION FIREBASE STATUS ---
+    // ========================================
+    function updateFirebaseStatus(message, isSuccess) {
+        const statusContainer = document.getElementById('firebase-status-container');
+        if (isSuccess) {
+            statusContainer.innerHTML = `<div class="firebase-status status-success">✅ Firebase ${message}</div>`;
+        } else {
+            statusContainer.innerHTML = `<div class="firebase-status status-error">⚠️ ${message}</div>`;
+        }
+    }
+
+    // ========================================
+    // --- 5. FEU D'ARTIFICE (CONFETTI) ---
+    // ========================================
     function fireConfetti() {
-        // Couleurs de l'asso : Orange, Jaune, Bleu
-        var myColors = ['#f39200', '#ffc107', '#003a5d'];
+        const myColors = ['#f39200', '#ffc107', '#003a5d'];
         confetti({
             particleCount: 100,
             spread: 70,
@@ -280,18 +503,28 @@
         });
     }
 
+    // ========================================
+    // --- 6. DÉMARRAGE DU QUIZ ---
+    // ========================================
     function startQuiz() {
+        currentQuestionIndex = 0;
+        score = 0;
+        hasAnswered = false;
         document.getElementById('welcome-block').classList.add('hidden');
         document.getElementById('quiz-block').classList.remove('hidden');
         loadQuestion();
     }
 
+    // ========================================
+    // --- 7. CHARGEMENT DES QUESTIONS ---
+    // ========================================
     function loadQuestion() {
         hasAnswered = false;
         document.getElementById('next-btn').style.display = "none";
         
         const q = questions[currentQuestionIndex];
-        document.getElementById('progress-text').innerText = `QUESTION ${currentQuestionIndex + 1} SUR ${questions.length}`;
+        document.getElementById('progress-text').innerText = 
+            `Question ${currentQuestionIndex + 1} sur ${questions.length}`;
         document.getElementById('question-text').innerText = q.q;
         
         const optionsContainer = document.getElementById('options-container');
@@ -300,12 +533,15 @@
         q.options.forEach((opt, index) => {
             const btn = document.createElement('button');
             btn.className = "option-btn";
-            btn.innerHTML = `<span>${opt}</span>`;
+            btn.innerText = opt;
             btn.onclick = () => selectOption(btn, index);
             optionsContainer.appendChild(btn);
         });
     }
 
+    // ========================================
+    // --- 8. SÉLECTION D'UNE RÉPONSE ---
+    // ========================================
     function selectOption(clickedBtn, selectedIndex) {
         if (hasAnswered) return;
         hasAnswered = true;
@@ -314,18 +550,26 @@
         const buttons = document.querySelectorAll('.option-btn');
         
         if (selectedIndex === q.answer) {
+            // Bonne réponse
             clickedBtn.classList.add('correct', 'animate-correct');
             score++;
-            fireConfetti(); // <-- DÉCLENCHEMENT DU FEU D'ARTIFICE
+            fireConfetti();
         } else {
+            // Mauvaise réponse
             clickedBtn.classList.add('incorrect', 'animate-incorrect');
-            buttons[q.answer].classList.add('correct'); 
+            buttons[q.answer].classList.add('correct');
         }
 
+        // Désactiver tous les boutons
         buttons.forEach(btn => btn.disabled = true);
+        
+        // Afficher bouton "Suivant"
         document.getElementById('next-btn').style.display = "inline-block";
     }
 
+    // ========================================
+    // --- 9. QUESTION SUIVANTE ---
+    // ========================================
     function nextQuestion() {
         currentQuestionIndex++;
         if (currentQuestionIndex < questions.length) {
@@ -335,6 +579,9 @@
         }
     }
 
+    // ========================================
+    // --- 10. AFFICHAGE DES RÉSULTATS ---
+    // ========================================
     function showResults() {
         document.getElementById('quiz-block').classList.add('hidden');
         document.getElementById('result-block').classList.remove('hidden');
@@ -345,56 +592,110 @@
         const trophy = document.getElementById('trophy-emoji');
         
         if (score === 10) {
-            feedback.innerText = "Incroyable ! Vous êtes un expert absolu des Feux Follets !";
+            feedback.innerText = "🌟 Incroyable ! Vous êtes un expert absolu des Feux Follets !";
             trophy.innerText = "👑🏆👑";
-            fireConfetti(); // Feu d'artifice final pour le score parfait !
+            fireConfetti();
         } else if (score >= 8) {
-            feedback.innerText = "Excellent travail ! Vous maîtrisez très bien le sujet.";
+            feedback.innerText = "🎯 Excellent travail ! Vous maîtrisez très bien le sujet.";
             trophy.innerText = "🥇 Or";
         } else if (score >= 5) {
-            feedback.innerText = "Bien joué ! Vous avez de bonnes connaissances.";
+            feedback.innerText = "👍 Bien joué ! Vous avez de bonnes connaissances.";
             trophy.innerText = "🥈 Argent";
         } else {
-            feedback.innerText = "Merci pour votre participation ! L'important est d'apprendre.";
+            feedback.innerText = "💪 Merci pour votre participation ! L'important est d'apprendre.";
             trophy.innerText = "🥉 Bronze";
         }
     }
 
+    // ========================================
+    // --- 11. SAUVEGARDE DU SCORE FIREBASE ---
+    // ========================================
     function saveScoreToFirebase() {
-        const playerName = document.getElementById('player-name').value;
+        const playerName = document.getElementById('player-name').value.trim();
         const saveBtn = document.getElementById('save-btn');
+        const saveStatus = document.getElementById('save-status');
 
+        // Validation du nom
         if (!playerName) {
-            alert("Merci d'entrer un nom !");
+            saveStatus.innerHTML = '<span style="color: #c00; font-weight: bold;">❌ Merci d\'entrer un nom !</span>';
+            document.getElementById('player-name').focus();
             return;
         }
 
-        saveBtn.disabled = true;
-        saveBtn.innerText = "Sauvegarde en cours...";
+        if (playerName.length < 2) {
+            saveStatus.innerHTML = '<span style="color: #c00; font-weight: bold;">❌ Le nom doit contenir au moins 2 caractères !</span>';
+            return;
+        }
 
-        if(typeof db === 'undefined') {
+        // Désactiver le bouton
+        saveBtn.disabled = true;
+        saveBtn.innerText = "⏳ Sauvegarde en cours...";
+        saveStatus.innerHTML = '';
+
+        // Vérifier si Firebase est disponible
+        if (!db) {
             setTimeout(() => {
-                alert(`⚠️ Mode Simulation : Bravo ${playerName}, score de ${score} mémorisé ! (Activez Firebase pour de vrai)`);
-                document.getElementById('firebase-save-block').innerHTML = "<p style='color:var(--correct-green); font-weight:bold; text-align:center;'>✅ Score enregistré (simulation) !</p>";
+                saveStatus.innerHTML = `<span style="color: var(--correct-green); font-weight: bold;">⚠️ Mode simulation : Score de ${score}/10 enregistré pour ${playerName}</span>`;
+                saveBtn.innerText = "💾 Sauvegarder le score";
+                saveBtn.disabled = false;
+                updateFirebaseStatus("Pas de connexion active", false);
             }, 1000);
             return;
         }
 
+        // Sauvegarder dans Firestore
         db.collection("hospital_scores").add({
             name: playerName,
-            score: score,
+            score: parseInt(score),
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         })
         .then(() => {
-            document.getElementById('firebase-save-block').innerHTML = "<p style='color:var(--correct-green); font-weight:bold; text-align:center; font-size:1.2em;'>🎉 Score enregistré avec succès ! Merci !</p>";
+            console.log(`✓ Score sauvegardé: ${playerName} - ${score}/10`);
+            saveStatus.innerHTML = '<span style="color: var(--correct-green); font-weight: bold; font-size: 1.1em;">🎉 Score enregistré avec succès !</span>';
+            saveBtn.disabled = true;
+            saveBtn.innerText = "✅ Score enregistré";
+            document.getElementById('player-name').disabled = true;
+            updateFirebaseStatus("Score sauvegardé", true);
         })
         .catch((error) => {
-            console.error("Erreur : ", error);
+            console.error("❌ Erreur Firestore:", error);
+            saveStatus.innerHTML = `<span style="color: #c00; font-weight: bold;">❌ Erreur: ${error.message}</span>`;
             saveBtn.disabled = false;
-            saveBtn.innerText = "Réessayer la sauvegarde";
-            alert("Oups, une erreur est survenue. Vérifiez la connexion.");
+            saveBtn.innerText = "🔄 Réessayer la sauvegarde";
+            updateFirebaseStatus(`Erreur: ${error.code}`, false);
         });
     }
+
+    // ========================================
+    // --- 12. TEST DE CONNEXION AU CHARGEMENT ---
+    // ========================================
+    window.addEventListener('load', () => {
+        console.log("🚀 Page Quiz chargée");
+        
+        if (db) {
+            db.collection("hospital_scores").limit(1).get()
+                .then(() => {
+                    console.log("✓ Connexion Firestore OK");
+                    updateFirebaseStatus("connecté", true);
+                })
+                .catch((error) => {
+                    console.error("✗ Erreur de connexion:", error);
+                    updateFirebaseStatus(`Erreur de connexion: ${error.code}`, false);
+                });
+        }
+    });
+
+    // Permettre ENTRÉE pour valider le nom
+    document.addEventListener('DOMContentLoaded', () => {
+        const playerNameInput = document.getElementById('player-name');
+        if (playerNameInput) {
+            playerNameInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    saveScoreToFirebase();
+                }
+            });
+        }
+    });
 </script>
 
 </body>
