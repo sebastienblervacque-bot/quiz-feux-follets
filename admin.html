@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau d'Honneur - Les Feux Follets</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+
+    <style>
+        :root {
+            --primary-orange: #f39200;
+            --secondary-yellow: #ffc107;
+            --dark-blue: #003a5d;
+            --light-bg: #fdfaf6;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light-bg);
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .dashboard-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 30px;
+            border-top: 8px solid var(--dark-blue);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: var(--primary-orange);
+            margin-bottom: 5px;
+        }
+
+        p { color: #666; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background-color: var(--dark-blue);
+            color: white;
+            font-weight: bold;
+        }
+
+        tr:hover { background-color: #f9f9f9; }
+
+        .score-col {
+            font-weight: bold;
+            color: var(--primary-orange);
+            font-size: 1.1em;
+        }
+
+        .medal { font-size: 1.2em; margin-right: 5px; }
+        
+        .live-badge {
+            display: inline-block;
+            background-color: red;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.8em;
+            font-weight: bold;
+            animation: blink 2s infinite;
+            vertical-align: middle;
+            margin-left: 10px;
+        }
+
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="dashboard-container">
+    <div class="header">
+        <h1>🏆 Tableau d'Honneur (Admin)</h1>
+        <p>Scores de l'animation Hôpital - Les Feux Follets <span class="live-badge">🔴 EN DIRECT</span></p>
+    </div>
+
+    <table id="scores-table">
+        <thead>
+            <tr>
+                <th>Rang</th>
+                <th>Participant</th>
+                <th>Score</th>
+                <th>Date & Heure</th>
+            </tr>
+        </thead>
+        <tbody id="scores-body">
+            <tr>
+                <td colspan="4" style="text-align:center;">Connexion à la base de données en cours...</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<script>
+    // --- 1. CONFIGURATION FIREBASE (À REMPLACER PAR LA VÔTRE) ---
+    const firebaseConfig = {
+	  apiKey: "AIzaSyCoTQOSNy-9EcpEncFprbEjCqa7lCGkRHs",
+	  authDomain: "quiz-feux-follets.firebaseapp.com",
+	  projectId: "quiz-feux-follets",
+	  storageBucket: "quiz-feux-follets.firebasestorage.app",
+	  messagingSenderId: "294811125482",
+	  appId: "1:294811125482:web:9a1565ed6b9e76d286f993"
+    };
+
+    // Initialisation
+    // firebase.initializeApp(firebaseConfig);
+    // const db = firebase.firestore();
+
+    // --- 2. RÉCUPÉRATION DES SCORES EN TEMPS RÉEL ---
+    function loadScores() {
+        if(typeof db === 'undefined') {
+            document.getElementById('scores-body').innerHTML = `<tr><td colspan="4" style="text-align:center; color:red;">Firebase n'est pas encore configuré !</td></tr>`;
+            return;
+        }
+
+        // "onSnapshot" permet de mettre à jour le tableau automatiquement dès qu'un joueur valide son score !
+        db.collection("hospital_scores")
+          .orderBy("score", "desc") // Trie du plus grand au plus petit score
+          .orderBy("timestamp", "desc") // En cas d'égalité, le plus récent en premier
+          .onSnapshot((querySnapshot) => {
+            
+            const tbody = document.getElementById('scores-body');
+            tbody.innerHTML = ""; // On vide le tableau
+            
+            if (querySnapshot.empty) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Aucun score enregistré pour le moment.</td></tr>`;
+                return;
+            }
+
+            let rank = 1;
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                
+                // Formater la date
+                let dateStr = "Date inconnue";
+                if (data.timestamp) {
+                    const date = data.timestamp.toDate();
+                    dateStr = date.toLocaleDateString('fr-FR') + ' à ' + date.toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
+                }
+
+                // Ajouter les médailles pour le Top 3
+                let rankDisplay = rank;
+                if (rank === 1) rankDisplay = '<span class="medal">🥇</span> 1er';
+                else if (rank === 2) rankDisplay = '<span class="medal">🥈</span> 2ème';
+                else if (rank === 3) rankDisplay = '<span class="medal">🥉</span> 3ème';
+
+                // Créer la ligne
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${rankDisplay}</td>
+                    <td style="font-weight:bold;">${data.name}</td>
+                    <td class="score-col">${data.score} / 10</td>
+                    <td style="font-size: 0.9em; color: gray;">${dateStr}</td>
+                `;
+                
+                tbody.appendChild(tr);
+                rank++;
+            });
+        });
+    }
+
+    // Lancer au chargement
+    window.onload = loadScores;
+</script>
+
+</body>
+</html>
