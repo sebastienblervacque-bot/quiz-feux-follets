@@ -16,19 +16,24 @@
             --light-bg: #fdfaf6;
         }
 
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--light-bg);
             color: #333;
             margin: 0;
             padding: 20px;
+            min-height: 100vh;
         }
 
         .dashboard-container {
             background: white;
             border-radius: 15px;
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             padding: 30px;
             border-top: 8px solid var(--dark-blue);
@@ -37,158 +42,657 @@
         .header {
             text-align: center;
             margin-bottom: 30px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 20px;
         }
 
         h1 {
             color: var(--primary-orange);
-            margin-bottom: 5px;
+            margin: 0 0 5px 0;
+            font-size: 2em;
         }
 
-        p { color: #666; }
+        .subtitle {
+            color: #666;
+            margin: 5px 0 0 0;
+            font-size: 0.95em;
+        }
+
+        .status-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .status-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .live-badge {
+            display: inline-flex;
+            align-items: center;
+            background-color: #dc3545;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: bold;
+            animation: blink 1.5s infinite;
+            gap: 5px;
+            white-space: nowrap;
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background-color: white;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        /* Messages de statut */
+        .status-message {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-success {
+            background-color: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+
+        .status-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+
+        .status-loading {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border-left: 4px solid #17a2b8;
+        }
+
+        /* Table */
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
+            margin: 0;
         }
 
-        th, td {
-            padding: 15px;
-            text-align: left;
-            border-bottom: 1px solid #eee;
+        thead {
+            background-color: var(--dark-blue);
+            color: white;
+            position: sticky;
+            top: 0;
         }
 
         th {
-            background-color: var(--dark-blue);
-            color: white;
-            font-weight: bold;
+            padding: 16px;
+            text-align: left;
+            font-weight: 600;
+            letter-spacing: 0.5px;
         }
 
-        tr:hover { background-color: #f9f9f9; }
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.3s ease;
+        }
+
+        tbody tr {
+            transition: all 0.3s ease;
+        }
+
+        tbody tr:hover {
+            background-color: #f9f9f9;
+            transform: translateX(2px);
+        }
+
+        tbody tr.new-entry {
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Colonnes spéciales */
+        .rank-col {
+            font-weight: 600;
+            color: var(--dark-blue);
+            width: 80px;
+            text-align: center;
+        }
+
+        .name-col {
+            font-weight: 600;
+            color: var(--dark-blue);
+            min-width: 150px;
+        }
 
         .score-col {
-            font-weight: bold;
+            font-weight: 700;
             color: var(--primary-orange);
+            font-size: 1.15em;
+            text-align: center;
+            width: 100px;
+        }
+
+        .date-col {
+            font-size: 0.9em;
+            color: #888;
+            width: 150px;
+        }
+
+        .medal {
+            font-size: 1.3em;
+            margin-right: 8px;
+            display: inline-block;
+        }
+
+        /* Message vide */
+        .empty-message {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
             font-size: 1.1em;
         }
 
-        .medal { font-size: 1.2em; margin-right: 5px; }
-        
-        .live-badge {
-            display: inline-block;
-            background-color: red;
-            color: white;
-            padding: 3px 8px;
-            border-radius: 10px;
-            font-size: 0.8em;
-            font-weight: bold;
-            animation: blink 2s infinite;
-            vertical-align: middle;
-            margin-left: 10px;
+        .empty-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+            opacity: 0.5;
         }
 
-        @keyframes blink {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
+        /* Stats footer */
+        .stats-footer {
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .stat-box {
+            text-align: center;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary-orange);
+        }
+
+        .stat-label {
+            font-size: 0.85em;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: var(--primary-orange);
+        }
+
+        /* Contrôles */
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background-color: var(--dark-blue);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 0.95em;
+        }
+
+        button:hover {
+            background-color: #00223e;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .dashboard-container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            .status-bar {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            th, td {
+                padding: 12px;
+                font-size: 0.9em;
+            }
+
+            .date-col {
+                width: auto;
+                display: none;
+            }
+
+            .score-col {
+                width: auto;
+            }
+
+            .stats-footer {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Loader animation */
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--primary-orange);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
 
 <div class="dashboard-container">
+    <!-- HEADER -->
     <div class="header">
-        <h1>🏆 Tableau d'Honneur (Admin)</h1>
-        <p>Scores de l'animation Hôpital - Les Feux Follets <span class="live-badge">🔴 EN DIRECT</span></p>
+        <h1>🏆 Tableau d'Honneur</h1>
+        <p class="subtitle">Les Feux Follets - Animation Hôpital</p>
     </div>
 
-    <table id="scores-table">
-        <thead>
-            <tr>
-                <th>Rang</th>
-                <th>Participant</th>
-                <th>Score</th>
-                <th>Date & Heure</th>
-            </tr>
-        </thead>
-        <tbody id="scores-body">
-            <tr>
-                <td colspan="4" style="text-align:center;">Connexion à la base de données en cours...</td>
-            </tr>
-        </tbody>
-    </table>
+    <!-- STATUS BAR -->
+    <div class="status-bar">
+        <div class="status-info">
+            <span class="live-badge">
+                <span class="live-dot"></span>
+                🔴 EN DIRECT
+            </span>
+        </div>
+        <div id="firebase-status" class="status-info" style="color: #666;">
+            Initialisation...
+        </div>
+    </div>
+
+    <!-- MESSAGE DE STATUT -->
+    <div id="status-message"></div>
+
+    <!-- TABLE -->
+    <div class="table-wrapper">
+        <table id="scores-table">
+            <thead>
+                <tr>
+                    <th class="rank-col">Rang</th>
+                    <th class="name-col">Participant</th>
+                    <th class="score-col">Score</th>
+                    <th class="date-col">Heure</th>
+                </tr>
+            </thead>
+            <tbody id="scores-body">
+                <tr>
+                    <td colspan="4" class="empty-message">
+                        <div class="empty-icon">📋</div>
+                        Attente de la première réponse...
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-footer">
+        <div class="stat-box">
+            <div class="stat-label">Participants</div>
+            <div class="stat-value" id="total-participants">0</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">Meilleur Score</div>
+            <div class="stat-value" id="best-score">0/10</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">Score Moyen</div>
+            <div class="stat-value" id="average-score">0/10</div>
+        </div>
+    </div>
+
+    <!-- CONTRÔLES -->
+    <div class="controls">
+        <button onclick="refreshScores()">🔄 Rafraîchir</button>
+        <button class="btn-secondary" onclick="exportData()">📥 Exporter</button>
+    </div>
 </div>
 
 <script>
-    // --- 1. CONFIGURATION FIREBASE (À REMPLACER PAR LA VÔTRE) ---
+    // ========================================
+    // --- 1. CONFIGURATION FIREBASE ---
+    // ========================================
     const firebaseConfig = {
-	  apiKey: "AIzaSyCoTQOSNy-9EcpEncFprbEjCqa7lCGkRHs",
-	  authDomain: "quiz-feux-follets.firebaseapp.com",
-	  projectId: "quiz-feux-follets",
-	  storageBucket: "quiz-feux-follets.firebasestorage.app",
-	  messagingSenderId: "294811125482",
-	  appId: "1:294811125482:web:9a1565ed6b9e76d286f993"
+        apiKey: "AIzaSyCoTQOSNy-9EcpEncFprbEjCqa7lCGkRHs",
+        authDomain: "quiz-feux-follets.firebaseapp.com",
+        projectId: "quiz-feux-follets",
+        storageBucket: "quiz-feux-follets.firebasestorage.app",
+        messagingSenderId: "294811125482",
+        appId: "1:294811125482:web:9a1565ed6b9e76d286f993"
     };
 
-    // Initialisation
-     firebase.initializeApp(firebaseConfig);
-     const db = firebase.firestore();
+    let db = null;
+    let unsubscribe = null;
+    let currentScores = [];
 
-    // --- 2. RÉCUPÉRATION DES SCORES EN TEMPS RÉEL ---
-    function loadScores() {
-        if(typeof db === 'undefined') {
-            document.getElementById('scores-body').innerHTML = `<tr><td colspan="4" style="text-align:center; color:red;">Firebase n'est pas encore configuré !</td></tr>`;
+    // ========================================
+    // --- 2. INITIALISATION FIREBASE ---
+    // ========================================
+    function initializeFirebase() {
+        try {
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.firestore();
+            console.log("✓ Firebase initialisé avec succès");
+            updateFirebaseStatus(true, "Connecté");
+            return true;
+        } catch (error) {
+            console.error("✗ Erreur Firebase:", error);
+            if (error.code === 'app/duplicate-app') {
+                db = firebase.firestore();
+                updateFirebaseStatus(true, "Connecté (existant)");
+                return true;
+            }
+            updateFirebaseStatus(false, `Erreur: ${error.message}`);
+            return false;
+        }
+    }
+
+    // ========================================
+    // --- 3. GESTION DU STATUT FIREBASE ---
+    // ========================================
+    function updateFirebaseStatus(isConnected, message) {
+        const statusEl = document.getElementById('firebase-status');
+        if (isConnected) {
+            statusEl.innerHTML = `✅ ${message}`;
+            statusEl.style.color = '#28a745';
+        } else {
+            statusEl.innerHTML = `❌ ${message}`;
+            statusEl.style.color = '#dc3545';
+        }
+    }
+
+    // ========================================
+    // --- 4. AFFICHAGE DES MESSAGES ---
+    // ========================================
+    function showStatus(message, type = 'loading') {
+        const statusEl = document.getElementById('status-message');
+        const icons = {
+            'loading': '<span class="spinner"></span>',
+            'success': '✅',
+            'error': '❌'
+        };
+        statusEl.innerHTML = `<div class="status-message status-${type}">${icons[type]} ${message}</div>`;
+    }
+
+    function clearStatus() {
+        document.getElementById('status-message').innerHTML = '';
+    }
+
+    // ========================================
+    // --- 5. CHARGEMENT EN TEMPS RÉEL ---
+    // ========================================
+    function loadScoresRealtime() {
+        if (!db) {
+            showStatus('Firebase non initialisé', 'error');
             return;
         }
 
-        // "onSnapshot" permet de mettre à jour le tableau automatiquement dès qu'un joueur valide son score !
-        db.collection("hospital_scores")
-          .orderBy("score", "desc") // Trie du plus grand au plus petit score
-          .orderBy("timestamp", "desc") // En cas d'égalité, le plus récent en premier
-          .onSnapshot((querySnapshot) => {
-            
-            const tbody = document.getElementById('scores-body');
-            tbody.innerHTML = ""; // On vide le tableau
-            
-            if (querySnapshot.empty) {
-                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Aucun score enregistré pour le moment.</td></tr>`;
-                return;
-            }
+        console.log("📊 Démarrage du listener temps réel...");
+        showStatus('Chargement des données...', 'loading');
 
-            let rank = 1;
-            querySnapshot.forEach((doc) => {
-                const data = doc.data();
-                
-                // Formater la date
-                let dateStr = "Date inconnue";
-                if (data.timestamp) {
-                    const date = data.timestamp.toDate();
-                    dateStr = date.toLocaleDateString('fr-FR') + ' à ' + date.toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
+        // Arrêter le listener précédent s'il existe
+        if (unsubscribe) unsubscribe();
+
+        unsubscribe = db.collection("hospital_scores")
+            .orderBy("score", "desc")
+            .orderBy("timestamp", "desc")
+            .onSnapshot(
+                (querySnapshot) => {
+                    console.log(`✓ ${querySnapshot.size} document(s) reçu(s)`);
+                    
+                    currentScores = [];
+                    const tbody = document.getElementById('scores-body');
+                    tbody.innerHTML = "";
+                    
+                    if (querySnapshot.empty) {
+                        showStatus('En attente des premières réponses...', 'loading');
+                        tbody.innerHTML = `
+                            <tr>
+                                <td colspan="4" class="empty-message">
+                                    <div class="empty-icon">⏳</div>
+                                    Aucun score pour le moment. Le tableau se remplira au fur et à mesure.
+                                </td>
+                            </tr>
+                        `;
+                        updateStats([]);
+                        return;
+                    }
+
+                    let rank = 1;
+                    querySnapshot.forEach((doc) => {
+                        const data = doc.data();
+                        currentScores.push(data);
+                        console.log(`📍 Participant #${rank}:`, data.name, data.score);
+                        
+                        // Formater la date
+                        let timeStr = "N/A";
+                        if (data.timestamp) {
+                            try {
+                                const date = data.timestamp.toDate();
+                                timeStr = date.toLocaleTimeString('fr-FR', {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    second: '2-digit'
+                                });
+                            } catch (e) {
+                                console.error("Erreur de formatage:", e);
+                            }
+                        }
+
+                        // Construire le rang avec médaille
+                        let rankDisplay = `<span style="color: #999;">${rank}</span>`;
+                        if (rank === 1) rankDisplay = '<span class="medal">🥇</span><strong>1er</strong>';
+                        else if (rank === 2) rankDisplay = '<span class="medal">🥈</span><strong>2e</strong>';
+                        else if (rank === 3) rankDisplay = '<span class="medal">🥉</span><strong>3e</strong>';
+
+                        // Créer la ligne
+                        const tr = document.createElement('tr');
+                        tr.className = 'new-entry';
+                        tr.innerHTML = `
+                            <td class="rank-col">${rankDisplay}</td>
+                            <td class="name-col">${escapeHtml(data.name || 'Anonyme')}</td>
+                            <td class="score-col">${parseInt(data.score || 0)}<span style="color: #999; font-size: 0.85em;">/10</span></td>
+                            <td class="date-col">${timeStr}</td>
+                        `;
+                        
+                        tbody.appendChild(tr);
+                        rank++;
+                    });
+
+                    // Afficher le message de succès
+                    clearStatus();
+                    showStatus(`${querySnapshot.size} score(s) enregistré(s) - Mis à jour en temps réel`, 'success');
+                    
+                    // Mettre à jour les statistiques
+                    updateStats(currentScores);
+                },
+                (error) => {
+                    console.error("❌ Erreur Firestore:", error);
+                    const tbody = document.getElementById('scores-body');
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="4" class="empty-message">
+                                <div class="empty-icon">⚠️</div>
+                                Erreur: ${escapeHtml(error.message || 'Impossible de charger les données')}
+                            </td>
+                        </tr>
+                    `;
+                    showStatus(`Erreur: ${error.message}`, 'error');
+                    updateFirebaseStatus(false, error.code || 'Erreur Firestore');
                 }
-
-                // Ajouter les médailles pour le Top 3
-                let rankDisplay = rank;
-                if (rank === 1) rankDisplay = '<span class="medal">🥇</span> 1er';
-                else if (rank === 2) rankDisplay = '<span class="medal">🥈</span> 2ème';
-                else if (rank === 3) rankDisplay = '<span class="medal">🥉</span> 3ème';
-
-                // Créer la ligne
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${rankDisplay}</td>
-                    <td style="font-weight:bold;">${data.name}</td>
-                    <td class="score-col">${data.score} / 10</td>
-                    <td style="font-size: 0.9em; color: gray;">${dateStr}</td>
-                `;
-                
-                tbody.appendChild(tr);
-                rank++;
-            });
-        });
+            );
     }
 
-    // Lancer au chargement
-    window.onload = loadScores;
+    // ========================================
+    // --- 6. MISE À JOUR DES STATISTIQUES ---
+    // ========================================
+    function updateStats(scores) {
+        if (scores.length === 0) {
+            document.getElementById('total-participants').textContent = '0';
+            document.getElementById('best-score').textContent = '0/10';
+            document.getElementById('average-score').textContent = '0/10';
+            return;
+        }
+
+        const totalParticipants = scores.length;
+        const bestScore = Math.max(...scores.map(s => parseInt(s.score || 0)));
+        const averageScore = (scores.reduce((sum, s) => sum + parseInt(s.score || 0), 0) / scores.length).toFixed(1);
+
+        document.getElementById('total-participants').textContent = totalParticipants;
+        document.getElementById('best-score').textContent = `${bestScore}/10`;
+        document.getElementById('average-score').textContent = `${averageScore}/10`;
+    }
+
+    // ========================================
+    // --- 7. UTILITAIRES ---
+    // ========================================
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function refreshScores() {
+        console.log("🔄 Rafraîchissement manuel...");
+        showStatus('Rafraîchissement...', 'loading');
+        setTimeout(() => {
+            loadScoresRealtime();
+        }, 500);
+    }
+
+    function exportData() {
+        if (currentScores.length === 0) {
+            alert('Aucun score à exporter');
+            return;
+        }
+
+        const csvContent = [
+            ['Rang', 'Participant', 'Score', 'Horodatage'],
+            ...currentScores.map((s, i) => [
+                i + 1,
+                s.name || 'Anonyme',
+                s.score || 0,
+                s.timestamp?.toDate?.()?.toLocaleString('fr-FR') || 'N/A'
+            ])
+        ]
+        .map(row => row.map(cell => `"${cell}"`).join(','))
+        .join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `scores-${new Date().toISOString().split('T')[0]}.csv`);
+        link.click();
+        console.log("✓ Données exportées");
+    }
+
+    // ========================================
+    // --- 8. INITIALISATION AU CHARGEMENT ---
+    // ========================================
+    window.addEventListener('load', () => {
+        console.log("🚀 Page Admin chargée");
+        if (initializeFirebase()) {
+            loadScoresRealtime();
+        }
+    });
+
+    // Gestion de la fermeture de la page
+    window.addEventListener('beforeunload', () => {
+        if (unsubscribe) unsubscribe();
+    });
+
+    // ========================================
+    // --- 9. AUTO-REFRESH TOUTES LES 5 MIN ---
+    // ========================================
+    setInterval(() => {
+        console.log("🔄 Vérification automatique...");
+        if (!unsubscribe) {
+            loadScoresRealtime();
+        }
+    }, 5 * 60 * 1000); // 5 minutes
 </script>
 
 </body>
