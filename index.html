@@ -97,11 +97,39 @@
             font-weight: bold;
         }
 
+        /* Chronomètre */
+        .timer-display {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #f0f7ff;
+            border: 2px solid var(--dark-blue);
+            border-radius: 20px;
+            padding: 6px 16px;
+            font-size: 1em;
+            font-weight: bold;
+            color: var(--dark-blue);
+            margin-bottom: 10px;
+        }
+
+        .timer-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--correct-green);
+            border-radius: 50%;
+            animation: pulse-dot 1s infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.8); }
+        }
+
         /* Quiz */
         .question {
             font-size: 1.3em;
             font-weight: bold;
-            margin: 30px 0 20px 0;
+            margin: 20px 0 20px 0;
             color: var(--dark-blue);
             min-height: 60px;
             line-height: 1.4;
@@ -133,7 +161,6 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
 
-        /* Couleurs et Animations de réponse */
         .option-btn.correct {
             background-color: var(--correct-green) !important;
             color: white !important;
@@ -228,7 +255,22 @@
             color: #888;
             text-transform: uppercase;
             letter-spacing: 1px;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
+        }
+
+        /* Résumé du temps sur l'écran résultat */
+        .time-result-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #f0f7ff;
+            border: 2px solid var(--dark-blue);
+            border-radius: 20px;
+            padding: 8px 20px;
+            font-size: 1.05em;
+            font-weight: bold;
+            color: var(--dark-blue);
+            margin: 10px 0 20px 0;
         }
 
         .firebase-status {
@@ -277,7 +319,7 @@
             background-color: #555;
         }
 
-        /* Barre de logos partenaires – disposition verticale */
+        /* Barre de logos partenaires */
         .logo-bar {
             display: flex;
             flex-direction: column;
@@ -385,6 +427,11 @@
     <!-- BLOC QUIZ -->
     <div id="quiz-block" class="hidden">
         <div class="progress" id="progress-text">Question 1 / 10</div>
+        <!-- CHRONOMÈTRE VISIBLE -->
+        <div class="timer-display">
+            <span class="timer-dot"></span>
+            ⏱️ Temps : <span id="timer-text">00:00</span>
+        </div>
         <div class="question" id="question-text">Chargement...</div>
         <div class="options" id="options-container"></div>
         <button id="next-btn" class="action-btn" style="display: none;" onclick="nextQuestion()">Question suivante ➔</button>
@@ -395,6 +442,10 @@
         <h2>🎊 Quiz Terminé !</h2>
         <div class="trophy" id="trophy-emoji">🏆</div>
         <h1 id="score-final">Score: 0/10</h1>
+        <!-- BADGE TEMPS FINAL -->
+        <div class="time-result-badge">
+            ⏱️ Temps total : <span id="time-display">--:--</span>
+        </div>
         <p id="feedback-text" style="font-size: 1.1em; margin: 20px 0;"></p>
         
         <div class="firebase-save-block">
@@ -426,7 +477,7 @@
     try {
         firebase.initializeApp(firebaseConfig);
         db = firebase.firestore();
-        console.log("✓ initialisé avec succès");
+        console.log("✓ Firebase initialisé avec succès");
         updateFirebaseStatus("connecté", true);
     } catch (error) {
         console.error("✗ Erreur Firebase:", error);
@@ -542,6 +593,11 @@
     let score = 0;
     let hasAnswered = false;
 
+    // Variables chronomètre
+    let quizStartTime = null;   // Date.now() au démarrage
+    let quizDuration = 0;       // Durée en secondes (entier)
+    let timerInterval = null;   // setInterval du chrono
+
     // ========================================
     // --- 4. GESTION FIREBASE STATUS ---
     // ========================================
@@ -568,7 +624,33 @@
     }
 
     // ========================================
-    // --- 6. DÉMARRAGE DU QUIZ ---
+    // --- 6. CHRONOMÈTRE ---
+    // ========================================
+    function formatTime(seconds) {
+        const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+        const s = (seconds % 60).toString().padStart(2, '0');
+        return `${m}:${s}`;
+    }
+
+    function startTimer() {
+        quizStartTime = Date.now();
+        timerInterval = setInterval(() => {
+            const elapsed = Math.floor((Date.now() - quizStartTime) / 1000);
+            document.getElementById('timer-text').textContent = formatTime(elapsed);
+        }, 1000);
+    }
+
+    function stopTimer() {
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+        }
+        // Durée finale en secondes (entier)
+        quizDuration = Math.floor((Date.now() - quizStartTime) / 1000);
+    }
+
+    // ========================================
+    // --- 7. DÉMARRAGE DU QUIZ ---
     // ========================================
     function startQuiz() {
         currentQuestionIndex = 0;
@@ -576,11 +658,12 @@
         hasAnswered = false;
         document.getElementById('welcome-block').classList.add('hidden');
         document.getElementById('quiz-block').classList.remove('hidden');
+        startTimer();   // ← démarrage du chronomètre
         loadQuestion();
     }
 
     // ========================================
-    // --- 7. CHARGEMENT DES QUESTIONS ---
+    // --- 8. CHARGEMENT DES QUESTIONS ---
     // ========================================
     function loadQuestion() {
         hasAnswered = false;
@@ -604,7 +687,7 @@
     }
 
     // ========================================
-    // --- 8. SÉLECTION D'UNE RÉPONSE ---
+    // --- 9. SÉLECTION D'UNE RÉPONSE ---
     // ========================================
     function selectOption(clickedBtn, selectedIndex) {
         if (hasAnswered) return;
@@ -614,43 +697,42 @@
         const buttons = document.querySelectorAll('.option-btn');
         
         if (selectedIndex === q.answer) {
-            // Bonne réponse
             clickedBtn.classList.add('correct', 'animate-correct');
             score++;
             fireConfetti();
         } else {
-            // Mauvaise réponse
             clickedBtn.classList.add('incorrect', 'animate-incorrect');
             buttons[q.answer].classList.add('correct');
         }
 
-        // Désactiver tous les boutons
         buttons.forEach(btn => btn.disabled = true);
-        
-        // Afficher bouton "Suivant"
         document.getElementById('next-btn').style.display = "inline-block";
     }
 
     // ========================================
-    // --- 9. QUESTION SUIVANTE ---
+    // --- 10. QUESTION SUIVANTE ---
     // ========================================
     function nextQuestion() {
         currentQuestionIndex++;
         if (currentQuestionIndex < questions.length) {
             loadQuestion();
         } else {
+            stopTimer();    // ← arrêt du chronomètre à la dernière question
             showResults();
         }
     }
 
     // ========================================
-    // --- 10. AFFICHAGE DES RÉSULTATS ---
+    // --- 11. AFFICHAGE DES RÉSULTATS ---
     // ========================================
     function showResults() {
         document.getElementById('quiz-block').classList.add('hidden');
         document.getElementById('result-block').classList.remove('hidden');
         
         document.getElementById('score-final').innerText = `Score : ${score} / ${questions.length}`;
+
+        // Affichage du temps final
+        document.getElementById('time-display').textContent = formatTime(quizDuration);
         
         const feedback = document.getElementById('feedback-text');
         const trophy = document.getElementById('trophy-emoji');
@@ -672,14 +754,13 @@
     }
 
     // ========================================
-    // --- 11. SAUVEGARDE DU SCORE FIREBASE ---
+    // --- 12. SAUVEGARDE DU SCORE FIREBASE ---
     // ========================================
     function saveScoreToFirebase() {
         const playerName = document.getElementById('player-name').value.trim();
         const saveBtn = document.getElementById('save-btn');
         const saveStatus = document.getElementById('save-status');
 
-        // Validation du nom
         if (!playerName) {
             saveStatus.innerHTML = '<span style="color: #c00; font-weight: bold;">❌ Merci d\'entrer un nom !</span>';
             document.getElementById('player-name').focus();
@@ -691,12 +772,10 @@
             return;
         }
 
-        // Désactiver le bouton
         saveBtn.disabled = true;
         saveBtn.innerText = "⏳ Sauvegarde en cours...";
         saveStatus.innerHTML = '';
 
-        // Vérifier si Firebase est disponible
         if (!db) {
             setTimeout(() => {
                 saveStatus.innerHTML = `<span style="color: var(--correct-green); font-weight: bold;">⚠️ Mode simulation : Score de ${score}/10 enregistré pour ${playerName}</span>`;
@@ -707,15 +786,16 @@
             return;
         }
 
-        // Sauvegarder dans Firestore
+        // Sauvegarde dans Firestore — avec le champ "time" pour départager les ex-aequo
         db.collection("hospital_scores").add({
             name: playerName,
             score: parseInt(score),
+            time: parseInt(quizDuration),           // ← durée en secondes (plus petit = plus rapide)
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         })
         .then(() => {
-            console.log(`✓ Score sauvegardé: ${playerName} - ${score}/10`);
-            saveStatus.innerHTML = '<span style="color: var(--correct-green); font-weight: bold; font-size: 1.1em;">🎉 Score enregistré avec succès !</span>';
+            console.log(`✓ Score sauvegardé: ${playerName} – ${score}/10 en ${formatTime(quizDuration)}`);
+            saveStatus.innerHTML = `<span style="color: var(--correct-green); font-weight: bold; font-size: 1.1em;">🎉 Score enregistré ! (${formatTime(quizDuration)})</span>`;
             saveBtn.disabled = true;
             saveBtn.innerText = "✅ Score enregistré";
             document.getElementById('player-name').disabled = true;
@@ -731,7 +811,7 @@
     }
 
     // ========================================
-    // --- 12. TEST DE CONNEXION AU CHARGEMENT ---
+    // --- 13. TEST DE CONNEXION AU CHARGEMENT ---
     // ========================================
     window.addEventListener('load', () => {
         console.log("🚀 Page Quiz chargée");

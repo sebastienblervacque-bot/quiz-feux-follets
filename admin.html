@@ -68,6 +68,13 @@
             font-size: 2em;
         }
 
+        h2 {
+            color: var(--dark-blue);
+            margin: 5px 0 0 0;
+            font-size: 1em;
+            font-weight: normal;
+        }
+
         .subtitle {
             color: #666;
             margin: 5px 0 0 0;
@@ -229,16 +236,46 @@
             width: 100px;
         }
 
+        /* Colonne durée */
+        .time-col {
+            font-size: 0.95em;
+            font-weight: 600;
+            color: var(--dark-blue);
+            text-align: center;
+            width: 110px;
+        }
+
+        /* Icône chrono dans l'en-tête */
+        .time-col-header {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            justify-content: center;
+        }
+
+        /* Badge "tie-breaker" pour mettre en valeur la colonne durée */
+        .tiebreaker-note {
+            font-size: 0.75em;
+            font-style: italic;
+            opacity: 0.85;
+            font-weight: normal;
+        }
+
         .date-col {
             font-size: 0.9em;
             color: #888;
-            width: 150px;
+            width: 130px;
         }
 
         .medal {
             font-size: 1.3em;
             margin-right: 8px;
             display: inline-block;
+        }
+
+        /* Mise en avant du temps pour les ex-aequo */
+        .time-fast {
+            color: #28a745;
         }
 
         /* Message vide */
@@ -341,20 +378,12 @@
                 align-items: flex-start;
             }
 
-	   .logo-bar .logo-date-text {
-         	font-size: 1em;
-       		color: var(--primary-orange);
-            	text-align: center;
-            	font-weight: bold;
-            	margin: 0;
-        	}
-
-
             th, td {
                 padding: 12px;
                 font-size: 0.9em;
             }
 
+            /* Masquer la colonne "Heure" sur mobile, garder "Durée" visible */
             .date-col {
                 width: auto;
                 display: none;
@@ -393,9 +422,8 @@
         <img src="Logo-PLEMaRa.png" alt="Logo PLEMaRa" class="header-logo">
         <div class="header-center">
             <h1>🏆 Tableau d'Honneur</h1>
-            <h2>🎗️Journée internationale des maladies rares</h2>
-	    <h1>28 février 2026</h1>
-
+            <h2>🎗️ Journée internationale des maladies rares</h2>
+            <h1>28 février 2026</h1>
         </div>
         <img src="Logo-FFx.png" alt="Logo FFx" class="header-logo">
     </div>
@@ -424,12 +452,18 @@
                     <th class="rank-col">Rang</th>
                     <th class="name-col">Participant</th>
                     <th class="score-col">Score</th>
+                    <th class="time-col">
+                        <div class="time-col-header">
+                            ⏱️ Durée
+                        </div>
+                        <div class="tiebreaker-note">ex-aequo : le + rapide gagne</div>
+                    </th>
                     <th class="date-col">Heure</th>
                 </tr>
             </thead>
             <tbody id="scores-body">
                 <tr>
-                    <td colspan="4" class="empty-message">
+                    <td colspan="5" class="empty-message">
                         <div class="empty-icon">📋</div>
                         Attente de la première réponse...
                     </td>
@@ -451,6 +485,10 @@
         <div class="stat-box">
             <div class="stat-label">Score Moyen</div>
             <div class="stat-value" id="average-score">0/10</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">Temps Moyen</div>
+            <div class="stat-value" id="average-time">--:--</div>
         </div>
     </div>
 
@@ -532,7 +570,17 @@
     }
 
     // ========================================
-    // --- 5. CHARGEMENT EN TEMPS RÉEL ---
+    // --- 5. FORMATAGE DU TEMPS ---
+    // ========================================
+    function formatTime(seconds) {
+        if (seconds == null || isNaN(seconds)) return '--:--';
+        const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+        const s = (seconds % 60).toString().padStart(2, '0');
+        return `${m}:${s}`;
+    }
+
+    // ========================================
+    // --- 6. CHARGEMENT EN TEMPS RÉEL ---
     // ========================================
     function loadScoresRealtime() {
         if (!db) {
@@ -543,12 +591,12 @@
         console.log("📊 Démarrage du listener temps réel...");
         showStatus('Chargement des données...', 'loading');
 
-        // Arrêter le listener précédent s'il existe
         if (unsubscribe) unsubscribe();
 
+        // Tri : score décroissant → durée croissante (le plus rapide en 1er) → timestamp décroissant
         unsubscribe = db.collection("hospital_scores")
             .orderBy("score", "desc")
-	    .orderBy("time", "asc")
+            .orderBy("time", "asc")
             .orderBy("timestamp", "desc")
             .onSnapshot(
                 (querySnapshot) => {
@@ -562,7 +610,7 @@
                         showStatus('En attente des premières réponses...', 'loading');
                         tbody.innerHTML = `
                             <tr>
-                                <td colspan="4" class="empty-message">
+                                <td colspan="5" class="empty-message">
                                     <div class="empty-icon">⏳</div>
                                     Aucun score pour le moment. Le tableau se remplira au fur et à mesure.
                                 </td>
@@ -576,9 +624,9 @@
                     querySnapshot.forEach((doc) => {
                         const data = doc.data();
                         currentScores.push(data);
-                        console.log(`📍 Participant #${rank}:`, data.name, data.score);
+                        console.log(`📍 #${rank}: ${data.name} – score ${data.score} – temps ${data.time}s`);
                         
-                        // Formater la date
+                        // Formater l'heure de soumission
                         let timeStr = "N/A";
                         if (data.timestamp) {
                             try {
@@ -593,6 +641,9 @@
                             }
                         }
 
+                        // Durée d'exécution du quiz
+                        const durationDisplay = formatTime(data.time);
+
                         // Construire le rang avec médaille
                         let rankDisplay = `<span style="color: #999;">${rank}</span>`;
                         if (rank === 1) rankDisplay = '<span class="medal">🥇</span><strong>1er</strong>';
@@ -606,6 +657,7 @@
                             <td class="rank-col">${rankDisplay}</td>
                             <td class="name-col">${escapeHtml(data.name || 'Anonyme')}</td>
                             <td class="score-col">${parseInt(data.score || 0)}<span style="color: #999; font-size: 0.85em;">/10</span></td>
+                            <td class="time-col"><span class="time-fast">${durationDisplay}</span></td>
                             <td class="date-col">${timeStr}</td>
                         `;
                         
@@ -613,11 +665,8 @@
                         rank++;
                     });
 
-                    // Afficher le message de succès
                     clearStatus();
-                    showStatus(`${querySnapshot.size} score(s) enregistré(s) - Mis à jour en temps réel`, 'success');
-                    
-                    // Mettre à jour les statistiques
+                    showStatus(`${querySnapshot.size} score(s) enregistré(s) – Mis à jour en temps réel`, 'success');
                     updateStats(currentScores);
                 },
                 (error) => {
@@ -625,7 +674,7 @@
                     const tbody = document.getElementById('scores-body');
                     tbody.innerHTML = `
                         <tr>
-                            <td colspan="4" class="empty-message">
+                            <td colspan="5" class="empty-message">
                                 <div class="empty-icon">⚠️</div>
                                 Erreur: ${escapeHtml(error.message || 'Impossible de charger les données')}
                             </td>
@@ -638,13 +687,14 @@
     }
 
     // ========================================
-    // --- 6. MISE À JOUR DES STATISTIQUES ---
+    // --- 7. MISE À JOUR DES STATISTIQUES ---
     // ========================================
     function updateStats(scores) {
         if (scores.length === 0) {
             document.getElementById('total-participants').textContent = '0';
             document.getElementById('best-score').textContent = '0/10';
             document.getElementById('average-score').textContent = '0/10';
+            document.getElementById('average-time').textContent = '--:--';
             return;
         }
 
@@ -652,13 +702,24 @@
         const bestScore = Math.max(...scores.map(s => parseInt(s.score || 0)));
         const averageScore = (scores.reduce((sum, s) => sum + parseInt(s.score || 0), 0) / scores.length).toFixed(1);
 
+        // Temps moyen (uniquement sur les entrées qui ont le champ "time")
+        const scoresWithTime = scores.filter(s => s.time != null && !isNaN(s.time));
+        let avgTimeDisplay = '--:--';
+        if (scoresWithTime.length > 0) {
+            const avgSeconds = Math.round(
+                scoresWithTime.reduce((sum, s) => sum + parseInt(s.time), 0) / scoresWithTime.length
+            );
+            avgTimeDisplay = formatTime(avgSeconds);
+        }
+
         document.getElementById('total-participants').textContent = totalParticipants;
         document.getElementById('best-score').textContent = `${bestScore}/10`;
         document.getElementById('average-score').textContent = `${averageScore}/10`;
+        document.getElementById('average-time').textContent = avgTimeDisplay;
     }
 
     // ========================================
-    // --- 7. UTILITAIRES ---
+    // --- 8. UTILITAIRES ---
     // ========================================
     function escapeHtml(text) {
         const div = document.createElement('div');
@@ -681,11 +742,13 @@
         }
 
         const csvContent = [
-            ['Rang', 'Participant', 'Score', 'Horodatage'],
+            ['Rang', 'Participant', 'Score', 'Durée (mm:ss)', 'Durée (secondes)', 'Horodatage'],
             ...currentScores.map((s, i) => [
                 i + 1,
                 s.name || 'Anonyme',
                 s.score || 0,
+                formatTime(s.time),
+                s.time != null ? s.time : 'N/A',
                 s.timestamp?.toDate?.()?.toLocaleString('fr-FR') || 'N/A'
             ])
         ]
@@ -702,7 +765,7 @@
     }
 
     // ========================================
-    // --- 8. INITIALISATION AU CHARGEMENT ---
+    // --- 9. INITIALISATION AU CHARGEMENT ---
     // ========================================
     window.addEventListener('load', () => {
         console.log("🚀 Page Admin chargée");
@@ -711,20 +774,19 @@
         }
     });
 
-    // Gestion de la fermeture de la page
     window.addEventListener('beforeunload', () => {
         if (unsubscribe) unsubscribe();
     });
 
     // ========================================
-    // --- 9. AUTO-REFRESH TOUTES LES 5 MIN ---
+    // --- 10. AUTO-REFRESH TOUTES LES 5 MIN ---
     // ========================================
     setInterval(() => {
         console.log("🔄 Vérification automatique...");
         if (!unsubscribe) {
             loadScoresRealtime();
         }
-    }, 5 * 60 * 1000); // 5 minutes
+    }, 5 * 60 * 1000);
 </script>
 
 </body>
