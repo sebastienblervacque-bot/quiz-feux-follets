@@ -178,10 +178,13 @@
         }
 
         th {
-            padding: 16px;
+            padding: 14px 16px;
             text-align: left;
             font-weight: 600;
+            font-size: 0.95em;
             letter-spacing: 0.5px;
+            vertical-align: middle;
+            white-space: nowrap;
         }
 
         td {
@@ -229,11 +232,15 @@
         }
 
         .score-col {
+            text-align: center;
+            width: 100px;
+        }
+
+        /* Valeurs de score en orange dans le corps du tableau uniquement */
+        tbody td.score-col {
             font-weight: 700;
             color: var(--primary-orange);
             font-size: 1.15em;
-            text-align: center;
-            width: 100px;
         }
 
         /* Colonne durée */
@@ -242,23 +249,26 @@
             font-weight: 600;
             color: var(--dark-blue);
             text-align: center;
-            width: 110px;
+            width: 120px;
         }
 
         /* Icône chrono dans l'en-tête */
         .time-col-header {
-            display: flex;
+            display: inline-flex;
             align-items: center;
             gap: 5px;
             justify-content: center;
         }
 
-        /* Badge "tie-breaker" pour mettre en valeur la colonne durée */
-        .tiebreaker-note {
-            font-size: 0.75em;
+        /* Badge "tie-breaker" déplacé en sous-titre du tableau */
+        .tiebreaker-caption {
+            display: block;
+            text-align: center;
+            font-size: 0.78em;
             font-style: italic;
-            opacity: 0.85;
-            font-weight: normal;
+            color: #aaa;
+            margin-top: 6px;
+            letter-spacing: 0.3px;
         }
 
         .date-col {
@@ -452,12 +462,7 @@
                     <th class="rank-col">Rang</th>
                     <th class="name-col">Participant</th>
                     <th class="score-col">Score</th>
-                    <th class="time-col">
-                        <div class="time-col-header">
-                            ⏱️ Durée
-                        </div>
-                        <div class="tiebreaker-note">ex-aequo : le + rapide gagne</div>
-                    </th>
+                    <th class="time-col"><span class="time-col-header">⏱️ Durée</span></th>
                     <th class="date-col">Heure</th>
                 </tr>
             </thead>
@@ -471,6 +476,8 @@
             </tbody>
         </table>
     </div>
+
+    <span class="tiebreaker-caption">⚖️ En cas d'ex-aequo, le participant le plus rapide est classé premier</span>
 
     <!-- STATS -->
     <div class="stats-footer">
